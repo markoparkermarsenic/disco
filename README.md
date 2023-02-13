@@ -53,3 +53,12 @@ python manage.py test image
 
 ## Note
 an image img.jpg is provided for your convenience
+
+
+## Troubleshooting
+you might have to run: 
+
+```bash
+chmod +x app/run.sh
+```
+if you get shim error on build 
