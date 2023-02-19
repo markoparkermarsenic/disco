@@ -8,12 +8,14 @@ from image.views import (
     upload_image,
     SubscriberCreateView,
     PlanListCreateView,
+    UserViewSet
 )
 
 
 router = routers.DefaultRouter()
 router.register(r"subscribers", SubscriberCreateView)
 router.register(r"plans", PlanListCreateView)
+router.register(r'users', UserViewSet)
 
 urlpatterns = [
     path("upload/", upload_image, name="upload_image"),

@@ -11,7 +11,7 @@ from PIL import Image as image_processor
 
 from rest_framework import generics, permissions
 from image.models import Subscriber, Plan
-from image.serializers import SubscriberSerializer, PlanSerializer
+from image.serializers import SubscriberSerializer, PlanSerializer, UserSerializer
 from rest_framework import mixins, viewsets
 
 
@@ -121,3 +121,12 @@ class SubscriberCreateView(viewsets.ModelViewSet):
     queryset = Subscriber.objects.all()
     serializer_class = SubscriberSerializer
     permission_classes = [permissions.IsAdminUser]
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
