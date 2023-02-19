@@ -1,6 +1,19 @@
-from django.urls import path
-from image.views import (fetch_thumbnails, list_images, serve_original_image,
-                         upload_image)
+from django.urls import path, include
+from rest_framework import routers
+
+from image.views import (
+    fetch_thumbnails,
+    list_images,
+    serve_original_image,
+    upload_image,
+    SubscriberCreateView,
+    PlanListCreateView,
+)
+
+
+router = routers.DefaultRouter()
+router.register(r"subscribers", SubscriberCreateView)
+router.register(r"plans", PlanListCreateView)
 
 urlpatterns = [
     path("upload/", upload_image, name="upload_image"),
@@ -13,4 +26,6 @@ urlpatterns = [
     path(
         "source_image/<str:image_id>", serve_original_image, name="serve_original_image"
     ),
+    path("", include(router.urls)),
+    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]
