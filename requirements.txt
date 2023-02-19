@@ -4,3 +4,4 @@ Pillow==8.4.0
 debugpy==1.5.1
 redis==4.3.0
 django-redis==5.2.0
+djangorestframework==3.14.0

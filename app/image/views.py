@@ -1,4 +1,3 @@
-
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
@@ -6,10 +5,14 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from image.helpers import (convert_to_bytes, get_user, link_not_expired,
-                           user_exists)
+from image.helpers import convert_to_bytes, get_user, link_not_expired, user_exists
 from image.models import Image, Link
 from PIL import Image as image_processor
+
+from rest_framework import generics, permissions
+from image.models import Subscriber, Plan
+from image.serializers import SubscriberSerializer, PlanSerializer, UserSerializer
+from rest_framework import mixins, viewsets
 
 
 @csrf_exempt
@@ -98,3 +101,33 @@ def get_expiry_date(expires_in):
     if expires_in is None:
         return None
     return timezone.timedelta(seconds=expires_in) + timezone.now()
+
+
+class PlanListCreateView(viewsets.ModelViewSet):
+    """
+    API endpoint that allows plans to be viewed or edited.
+    """
+
+    queryset = Plan.objects.all()
+    serializer_class = PlanSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class SubscriberCreateView(viewsets.ModelViewSet):
+    """
+    API endpoint that allows Subscribers to be viewed or edited.
+    """
+
+    queryset = Subscriber.objects.all()
+    serializer_class = SubscriberSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+
+    queryset = User.objects.all().order_by("-date_joined")
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]

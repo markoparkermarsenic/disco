@@ -11,7 +11,14 @@ Will launch the api.
 You can use the .env file provided for convenience or make changes as necessary
 
 ## Note on default data 
-When the server launches it will create a default user dev and the default plans, basic, premium and enterprise
+When the server launches it will create a default user dev and admin and the default plans, basic, premium and enterprise.
+The admin password is specified in .env
+
+## DRF endpoints
+The following endpoints can be used to create their respective objects!
+http://localhost:8000/subscribers/
+http://localhost:8000/plans/
+http://localhost:8000/users/
 
 ## POSTING
 
