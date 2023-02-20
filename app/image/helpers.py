@@ -25,9 +25,9 @@ def convert_to_bytes(image, format="JPEG"):
 def user_exists(func):
     def wrapper(request, *args, **kwargs):
         if request.method == "POST":
-            user = get_user(request.POST.get('user'))
+            user = get_user(request.POST.get("user"))
         if request.method == "GET":
-            user=request.path.split('/')[-1]
+            user = request.path.split("/")[-1]
         if user is None:
             return HttpResponseForbidden("Invalid User")
         return func(request, *args, **kwargs)

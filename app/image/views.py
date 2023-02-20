@@ -15,18 +15,17 @@ from image.serializers import SubscriberSerializer, PlanSerializer, UserSerializ
 from rest_framework import viewsets
 
 
-
 @csrf_exempt
 @user_exists
 def upload_image(request):
     if request.method != "POST":
         return HttpResponse.HttpResponseNotAllowed(["POST"])
 
-    user = get_user(request.POST.get('user'))
+    user = get_user(request.POST.get("user"))
     expires_in = (
         None
-        if request.POST.get('expires_in') is None
-        else int(request.POST.get('expires_in'))
+        if request.POST.get("expires_in") is None
+        else int(request.POST.get("expires_in"))
     )
     if expires_in is not None and not (300 <= int(expires_in) <= 3000):
         return HttpResponseBadRequest("expiry must be between 300-3000")
