@@ -1,5 +1,3 @@
-from io import BytesIO
-
 from django.contrib.auth.models import User
 from django.core.files.images import ImageFile
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -8,6 +6,9 @@ from django.urls import reverse
 from image.helpers import convert_to_bytes
 from image.models import Image, Link, Plan, Subscriber
 from PIL import Image as image_processor
+import json
+
+from django.utils import timezone
 
 
 # Create your tests here.
@@ -83,3 +84,20 @@ class UploadTest(TestCase):
     def test_list_images(self):
         response = self.client.get(reverse("list_images", args=("dev",)))
         self.assertEqual(response.status_code, 200)
+
+    def test_expired_image(self):
+        image = image_processor.open("test.jpg")
+        image = SimpleUploadedFile(
+            "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
+        )
+        response = self.client.post(
+            reverse("upload_image"), {"image": image, "user": "dev", "expires_in": 301}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        response_json = json.loads(response.content.decode())
+        response = self.client.get(response_json["200x200"])
+        with timezone.override("America/New_York"):
+            response = self.client.get(response_json["200x200"])
+
+        self.assertEqual(response.status_code, 404)
