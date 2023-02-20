@@ -9,10 +9,11 @@ from image.helpers import convert_to_bytes, get_user, link_not_expired, user_exi
 from image.models import Image, Link
 from PIL import Image as image_processor
 
-from rest_framework import generics, permissions
+from rest_framework import permissions
 from image.models import Subscriber, Plan
 from image.serializers import SubscriberSerializer, PlanSerializer, UserSerializer
-from rest_framework import mixins, viewsets
+from rest_framework import viewsets
+
 
 
 @csrf_exempt
@@ -21,11 +22,11 @@ def upload_image(request):
     if request.method != "POST":
         return HttpResponse.HttpResponseNotAllowed(["POST"])
 
-    user = get_user(request.headers.get("user"))
+    user = get_user(request.POST.get('user'))
     expires_in = (
         None
-        if request.headers.get("expires") is None
-        else int(request.headers.get("expires"))
+        if request.POST.get('expires_in') is None
+        else int(request.POST.get('expires_in'))
     )
     if expires_in is not None and not (300 <= int(expires_in) <= 3000):
         return HttpResponseBadRequest("expiry must be between 300-3000")
