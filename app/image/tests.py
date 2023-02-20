@@ -46,7 +46,7 @@ class UploadTest(TestCase):
             "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
         )
         response = self.client.post(
-            reverse("upload_image"), {"image": image}, HTTP_USER="dev"
+            reverse("upload_image"), {"image": image, "user": "dev"}
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Image.objects.count(), 1)
@@ -57,10 +57,7 @@ class UploadTest(TestCase):
             "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
         )
         response = self.client.post(
-            reverse("upload_image"),
-            {"image": image},
-            HTTP_USER="dev",
-            HTTP_EXPIRES_IN=301,
+            reverse("upload_image"), {"image": image, "user": "dev", "expires_in": 301}
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Image.objects.count(), 1)
@@ -72,10 +69,7 @@ class UploadTest(TestCase):
             "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
         )
         response = self.client.post(
-            reverse("upload_image"),
-            {"image": image},
-            HTTP_USER="dev",
-            HTTP_EXPIRES=299,
+            reverse("upload_image"), {"image": image, "user": "dev", "expires_in": 299}
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Image.objects.count(), 0)
@@ -87,7 +81,5 @@ class UploadTest(TestCase):
         self.assertEqual(Image.objects.count(), 0)
 
     def test_list_images(self):
-        response = self.client.get(
-            reverse("list_images", args=("dev",)), HTTP_USER="dev"
-        )
+        response = self.client.get(reverse("list_images", args=("dev",)))
         self.assertEqual(response.status_code, 200)
