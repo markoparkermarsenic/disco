@@ -5,11 +5,9 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from image.helpers import (convert_to_bytes, get_user, link_not_expired,
-                           user_exists)
+from image.helpers import convert_to_bytes, get_user, link_not_expired, user_exists
 from image.models import Image, Link, Plan, Subscriber
-from image.serializers import (PlanSerializer, SubscriberSerializer,
-                               UserSerializer)
+from image.serializers import PlanSerializer, SubscriberSerializer, UserSerializer
 from PIL import Image as image_processor
 from rest_framework import permissions, viewsets
 
@@ -49,7 +47,16 @@ def serve_original_image(request, image_id):
 def fetch_thumbnails(request, width, height, image_id):
     link = Link.objects.get(url=request.path)
     resized_image = cache.get(link.resized_image)
+    if resized_image is None:
+        handle_cache_miss(link)
+        cache.get(link.resized_image)
     return HttpResponse(resized_image, content_type="image/jpeg")
+
+
+def handle_cache_miss(link):
+    image = Image.objects.get(id=link.image_id)
+    x, y = list(map(int, link.resized_image.rsplit("-", 1)[1].split("x")))
+    resize_and_save(image, x, y)
 
 
 def generate_links(image, host, expires_in):
@@ -70,8 +77,7 @@ def generate_links(image, host, expires_in):
             expiry_date=expiry_date,
         )
 
-        resized = image_processor.open(image.image._get_file()).resize((x, y))
-        cache.set(f"{image.id}-{x}x{y}", convert_to_bytes(resized))
+        resize_and_save(image, x, y)
 
     if original_image:
         url = reverse("serve_original_image", args=(image.id,))
@@ -81,6 +87,11 @@ def generate_links(image, host, expires_in):
         links["original"] = f"{host}{url}"
 
     return links
+
+
+def resize_and_save(image, x, y):
+    resized = image_processor.open(image.image._get_file()).resize((x, y))
+    cache.set(f"{image.id}-{x}x{y}", convert_to_bytes(resized))
 
 
 @user_exists
