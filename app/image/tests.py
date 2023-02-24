@@ -44,36 +44,21 @@ class UploadTest(TestCase):
         image.save("test.jpg")
 
     def test_upload_image(self):
-        image = image_processor.open("test.jpg")
-        image = SimpleUploadedFile(
-            "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
-        )
-        response = self.client.post(
-            reverse("upload_image"), {"image": image, "user": "dev"}
-        )
+        response = self.post_image()
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Image.objects.count(), 1)
 
     def test_valid_expiry(self):
-        image = image_processor.open("test.jpg")
-        image = SimpleUploadedFile(
-            "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
-        )
-        response = self.client.post(
-            reverse("upload_image"), {"image": image, "user": "dev", "expires_in": 301}
-        )
+        response = self.post_image(expires_in=301)
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Image.objects.count(), 1)
         self.assertEqual(Link.objects.count(), 3)
 
     def test_invalid_expiry(self):
-        image = image_processor.open("test.jpg")
-        image = SimpleUploadedFile(
-            "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
-        )
-        response = self.client.post(
-            reverse("upload_image"), {"image": image, "user": "dev", "expires_in": 299}
-        )
+        response = self.post_image(expires_in=299)
+
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Image.objects.count(), 0)
         self.assertEqual(Link.objects.count(), 0)
@@ -88,13 +73,7 @@ class UploadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_expired_image(self):
-        image = image_processor.open("test.jpg")
-        image = SimpleUploadedFile(
-            "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
-        )
-        response = self.client.post(
-            reverse("upload_image"), {"image": image, "user": "dev", "expires_in": 301}
-        )
+        response = self.post_image(expires_in=301)
 
         response_json = json.loads(response.content.decode())
         _, url = response_json["200x200"].split("testserver", 1)
@@ -106,3 +85,26 @@ class UploadTest(TestCase):
 
         self.assertEqual(response.content.decode(), "Link Expired")
         self.assertEqual(response.status_code, 403)
+
+    def test_cache_miss(self):
+        response = self.post_image(expires_in=301)
+
+        response_json = json.loads(response.content.decode())
+        _, url = response_json["200x200"].split("testserver", 1)
+
+        with patch("django.core.cache.cache.get") as mock_cache:
+            mock_cache.return_value = None
+            response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+    def post_image(self, expires_in=301):
+        image = image_processor.open("test.jpg")
+        image = SimpleUploadedFile(
+            "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
+        )
+        response = self.client.post(
+            reverse("upload_image"),
+            {"image": image, "user": "dev", "expires_in": expires_in},
+        )
+        return response

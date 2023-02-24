@@ -49,7 +49,16 @@ def serve_original_image(request, image_id):
 def fetch_thumbnails(request, width, height, image_id):
     link = Link.objects.get(url=request.path)
     resized_image = cache.get(link.resized_image)
+    if resized_image is None:
+        handle_cache_miss(link)
+        cache.get(link.resized_image)
     return HttpResponse(resized_image, content_type="image/jpeg")
+
+
+def handle_cache_miss(link):
+    image = Image.objects.get(id=link.image_id)
+    x, y = list(map(int, link.resized_image.rsplit("-", 1)[1].split("x")))
+    resize_and_save(image, x, y)
 
 
 def generate_links(image, host, expires_in):
@@ -70,8 +79,7 @@ def generate_links(image, host, expires_in):
             expiry_date=expiry_date,
         )
 
-        resized = image_processor.open(image.image._get_file()).resize((x, y))
-        cache.set(f"{image.id}-{x}x{y}", convert_to_bytes(resized))
+        resize_and_save(image, x, y)
 
     if original_image:
         url = reverse("serve_original_image", args=(image.id,))
@@ -81,6 +89,11 @@ def generate_links(image, host, expires_in):
         links["original"] = f"{host}{url}"
 
     return links
+
+
+def resize_and_save(image, x, y):
+    resized = image_processor.open(image.image._get_file()).resize((x, y))
+    cache.set(f"{image.id}-{x}x{y}", convert_to_bytes(resized))
 
 
 @user_exists
