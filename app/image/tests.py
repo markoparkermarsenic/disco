@@ -1,10 +1,13 @@
-from io import BytesIO
+import json
+from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.files.images import ImageFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from image.helpers import convert_to_bytes
 from image.models import Image, Link, Plan, Subscriber
 from PIL import Image as image_processor
@@ -83,3 +86,23 @@ class UploadTest(TestCase):
     def test_list_images(self):
         response = self.client.get(reverse("list_images", args=("dev",)))
         self.assertEqual(response.status_code, 200)
+
+    def test_expired_image(self):
+        image = image_processor.open("test.jpg")
+        image = SimpleUploadedFile(
+            "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
+        )
+        response = self.client.post(
+            reverse("upload_image"), {"image": image, "user": "dev", "expires_in": 301}
+        )
+
+        response_json = json.loads(response.content.decode())
+        _, url = response_json["200x200"].split("testserver", 1)
+
+        future = timezone.now() + timedelta(seconds=400)
+        with patch("django.utils.timezone.now") as mock_timezone:
+            mock_timezone.return_value = future
+            response = self.client.get(url)
+
+        self.assertEqual(response.content.decode(), "Link Expired")
+        self.assertEqual(response.status_code, 403)

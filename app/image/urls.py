@@ -1,16 +1,8 @@
-from django.urls import path, include
+from django.urls import include, path
+from image.views import (PlanListCreateView, SubscriberCreateView, UserViewSet,
+                         fetch_thumbnails, list_images, serve_original_image,
+                         upload_image)
 from rest_framework import routers
-
-from image.views import (
-    fetch_thumbnails,
-    list_images,
-    serve_original_image,
-    upload_image,
-    SubscriberCreateView,
-    PlanListCreateView,
-    UserViewSet,
-)
-
 
 router = routers.DefaultRouter()
 router.register(r"subscribers", SubscriberCreateView)
