@@ -1,14 +1,16 @@
+import json
+from datetime import datetime, timedelta
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.core.files.images import ImageFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from image.helpers import convert_to_bytes
 from image.models import Image, Link, Plan, Subscriber
 from PIL import Image as image_processor
-import json
-
-from django.utils import timezone
 
 
 # Create your tests here.
@@ -93,11 +95,14 @@ class UploadTest(TestCase):
         response = self.client.post(
             reverse("upload_image"), {"image": image, "user": "dev", "expires_in": 301}
         )
-        self.assertEqual(response.status_code, 200)
 
         response_json = json.loads(response.content.decode())
-        response = self.client.get(response_json["200x200"])
-        with timezone.override("America/New_York"):
-            response = self.client.get(response_json["200x200"])
+        _, url = response_json["200x200"].split("testserver", 1)
 
-        self.assertEqual(response.status_code, 404)
+        future = timezone.now() + timedelta(seconds=400)
+        with patch("django.utils.timezone.now") as mock_timezone:
+            mock_timezone.return_value = future
+            response = self.client.get(url)
+
+        self.assertEqual(response.content.decode(), "Link Expired")
+        self.assertEqual(response.status_code, 403)

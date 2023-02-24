@@ -1,6 +1,6 @@
-from rest_framework import serializers
-from image.models import Subscriber, Plan
 from django.contrib.auth.models import User
+from image.models import Plan, Subscriber
+from rest_framework import serializers
 
 
 class PlanSerializer(serializers.ModelSerializer):
