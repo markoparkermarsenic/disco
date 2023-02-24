@@ -1,7 +1,13 @@
 from django.urls import include, path
-from image.views import (PlanListCreateView, SubscriberCreateView, UserViewSet,
-                         fetch_thumbnails, list_images, serve_original_image,
-                         upload_image)
+from image.views import (
+    PlanListCreateView,
+    SubscriberCreateView,
+    UserViewSet,
+    fetch_thumbnails,
+    list_images,
+    serve_original_image,
+    upload_image,
+)
 from rest_framework import routers
 
 router = routers.DefaultRouter()

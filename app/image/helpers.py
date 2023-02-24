@@ -40,3 +40,9 @@ def get_user(user):
         return User.objects.get(username=user)
     except User.DoesNotExist:
         return None
+
+
+def get_expiry_date(expires_in):
+    if expires_in is None:
+        return None
+    return timezone.timedelta(seconds=expires_in) + timezone.now()
