@@ -42,5 +42,6 @@ services:
       retries: 10
   cache:
     image: redis:6.2.10
-    expose:
-      - 6379
+    environment:
+      REDIS_MAXMEMORY: ${REDIS_MAXMEMORY}
+      REDIS_MAXMEMORY_POLICY: ${REDIS_MAXMEMORY_POLICY}
