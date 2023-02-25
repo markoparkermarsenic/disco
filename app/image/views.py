@@ -3,7 +3,6 @@ from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from image.helpers import (
     convert_to_bytes,
@@ -50,7 +49,7 @@ def serve_original_image(request, image_id):
 
 
 @link_not_expired
-def fetch_thumbnails(request, width, height, image_id):
+def fetch_thumbnails(request):
     link = Link.objects.get(url=request.path)
     resized_image = cache.get(link.resized_image)
     if resized_image is None:
