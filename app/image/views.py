@@ -49,7 +49,7 @@ def serve_original_image(request, image_id):
 
 
 @link_not_expired
-def fetch_thumbnails(request):
+def fetch_thumbnails(request, width, height, image_id):
     link = Link.objects.get(url=request.path)
     resized_image = cache.get(link.resized_image)
     if resized_image is None:
