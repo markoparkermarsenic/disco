@@ -5,15 +5,11 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from image.helpers import (
-    convert_to_bytes,
-    get_expiry_date,
-    get_user,
-    link_not_expired,
-    user_exists,
-)
+from image.helpers import (convert_to_bytes, get_expiry_date, get_user,
+                           link_not_expired, user_exists)
 from image.models import Image, Link, Plan, Subscriber
-from image.serializers import PlanSerializer, SubscriberSerializer, UserSerializer
+from image.serializers import (PlanSerializer, SubscriberSerializer,
+                               UserSerializer)
 from PIL import Image as image_processor
 from rest_framework import permissions, viewsets
 
@@ -32,10 +28,10 @@ def upload_image(request):
     )
     if expires_in is not None and not (300 <= int(expires_in) <= 3000):
         return HttpResponseBadRequest("expiry must be between 300-3000")
+    custom_size = list(map(int, [request.POST.get("x", 0), request.POST.get("y", 0)]))
 
     image = Image.objects.create(image=request.FILES["image"], author=user)
-
-    links = generate_links(image, request.get_host(), expires_in)
+    links = generate_links(image, request.get_host(), expires_in, custom_size)
 
     return JsonResponse(links)
 
@@ -65,14 +61,17 @@ def handle_cache_miss(link):
     resize_and_save(image, x, y)
 
 
-def generate_links(image, host, expires_in):
+def generate_links(image, host, expires_in, custom_size):
     plan_details = User.objects.get(username=image.author).subscriber.plan
     expiry = plan_details.expiring_links
     original_image = plan_details.original_image
     expiry_date = get_expiry_date(expires_in)
+    thumbnail_sizes = [] + plan_details.thumbnail_sizes
+    if any(custom_size):
+        thumbnail_sizes = thumbnail_sizes + [custom_size]
 
     links = {}
-    for x, y in plan_details.thumbnail_sizes:
+    for x, y in thumbnail_sizes:
         url = reverse("fetch_thumbnails", args=(x, y, image.id))
         links[f"{x}x{y}"] = f"{host}{url}"
         Link.objects.create(
@@ -96,8 +95,15 @@ def generate_links(image, host, expires_in):
 
 
 def resize_and_save(image, x, y):
-    resized = image_processor.open(image.image._get_file()).resize((x, y))
-    cache.set(f"{image.id}-{x}x{y}", convert_to_bytes(resized))
+    image_object = image_processor.open(image.image._get_file())
+    _x, _y = x, y  # _x and _y are used as ids for the link; so cannot change
+    if x == 0:
+        x = int(image_object.width * (y / image_object.height))
+    if y == 0:
+        y = int((x / image_object.width) * image_object.height)
+
+    resized = image_object.resize((x, y))
+    cache.set(f"{image.id}-{_x}x{_y}", convert_to_bytes(resized))
 
 
 @user_exists
