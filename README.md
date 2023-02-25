@@ -89,5 +89,3 @@ chmod +x app/run.sh
 ```
 if you get shim error on build 
 
-
-
