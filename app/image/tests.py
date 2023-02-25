@@ -11,6 +11,7 @@ from django.utils import timezone
 from image.helpers import convert_to_bytes
 from image.models import Image, Link, Plan, Subscriber
 from PIL import Image as image_processor
+from io import BytesIO
 
 
 # Create your tests here.
@@ -98,13 +99,36 @@ class UploadTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    def post_image(self, expires_in=301):
+    def test_custom_size(self):
+        x, y = 20, 0
+        response = self.post_image(custom_size=[x, y])
+
+        self.assertEqual(response.status_code, 200)
+
+        response_json = json.loads(response.content.decode())
+        _, url = response_json[f"{x}x{y}"].split("testserver", 1)
+
+        response = self.client.get(url)
+        resized_image = image_processor.open(BytesIO(response.content))
+
+        self.assertEqual(Link.objects.count(), 4)
+
+        self.assertEqual(resized_image.height, x)
+        self.assertEqual(resized_image.width, 20)
+
+    def post_image(self, expires_in=301, custom_size=[0, 0]):
         image = image_processor.open("test.jpg")
         image = SimpleUploadedFile(
             "test_image.jpg", content=convert_to_bytes(image), content_type="image/jpeg"
         )
         response = self.client.post(
             reverse("upload_image"),
-            {"image": image, "user": "dev", "expires_in": expires_in},
+            {
+                "image": image,
+                "user": "dev",
+                "expires_in": expires_in,
+                "x": custom_size[0],
+                "y": custom_size[1],
+            },
         )
         return response
