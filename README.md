@@ -1,3 +1,13 @@
+- [Installation](#installation)
+  - [Note on default data](#note-on-default-data)
+  - [DRF endpoints](#drf-endpoints)
+  - [POSTING](#posting)
+  - [List images](#list-images)
+  - [Custom Sizes](#custom-sizes)
+  - [Tests](#tests)
+  - [Note](#note)
+  - [Troubleshooting](#troubleshooting)
+
 # Installation
 
 You can use the `makefile` provided to quickly run common build commands; including running a debug version of the api
@@ -43,7 +53,18 @@ if expiry is valid for that user it will add an expiry to the link; otherwise it
 curl localhost:8000/list_images/dev
 ```
 
-this will return a json object of the form {'username':[{"id":<imageid>, "created":<timestamp>}]}
+this will return a json object of the form 
+```json 
+{"username":[{"id":<imageid>, "created":<timestamp>}]}
+```
+
+## Custom Sizes
+You can pass a custom size by defining the x or y you want to set; if you only set one; then the image will be resized with respect to the aspect ratio:
+
+```bash
+curl -F "image=@/path/to/img.jpg" -F "user=dev" -F "x=100" localhost:8000/upload/
+```
+If you pass both x and y then the image will be streched to fit the desired size.
 
 ## Tests
 tests can be run by attaching to the server container
@@ -67,6 +88,4 @@ you might have to run:
 chmod +x app/run.sh
 ```
 if you get shim error on build 
-
-
 
